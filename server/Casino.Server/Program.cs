@@ -1,3 +1,4 @@
+using Casino.Server.Games.Blackjack;
 using Casino.Server.Hubs;
 using Casino.Server.Services;
 
@@ -8,6 +9,9 @@ builder.Services.AddSignalR();
 
 builder.Services.AddSingleton<IPlayerStore, PlayerStore>();
 builder.Services.AddSingleton<ITableStore, TableStore>();
+builder.Services.AddSingleton<IBlackjackTableStore, BlackjackTableStore>();
+builder.Services.AddSingleton<BlackjackEngine>();
+builder.Services.AddSingleton<BlackjackTimerService>();
 
 builder.Services.AddCors(options =>
 {

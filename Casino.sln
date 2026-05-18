@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "server", "server", "{DDA3B9
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Casino.Server", "server\Casino.Server\Casino.Server.csproj", "{DF302335-9F5A-4DC5-BD0A-733C732BBD97}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Casino.Server.Tests", "server\Casino.Server.Tests\Casino.Server.Tests.csproj", "{DF0ACBE1-C9AC-4E22-BE04-FAAAD7BD2F4D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,8 +22,13 @@ Global
 		{DF302335-9F5A-4DC5-BD0A-733C732BBD97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF302335-9F5A-4DC5-BD0A-733C732BBD97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF302335-9F5A-4DC5-BD0A-733C732BBD97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF0ACBE1-C9AC-4E22-BE04-FAAAD7BD2F4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF0ACBE1-C9AC-4E22-BE04-FAAAD7BD2F4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF0ACBE1-C9AC-4E22-BE04-FAAAD7BD2F4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF0ACBE1-C9AC-4E22-BE04-FAAAD7BD2F4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{DF302335-9F5A-4DC5-BD0A-733C732BBD97} = {DDA3B93E-7BDE-4247-BA21-C625214BE4F6}
+		{DF0ACBE1-C9AC-4E22-BE04-FAAAD7BD2F4D} = {DDA3B93E-7BDE-4247-BA21-C625214BE4F6}
 	EndGlobalSection
 EndGlobal

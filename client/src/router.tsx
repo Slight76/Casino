@@ -26,6 +26,10 @@ export const router = createBrowserRouter([
       },
       {
         path: "blackjack",
+        element: <Navigate to="/lobby" replace />,
+      },
+      {
+        path: "blackjack/:tableId",
         element: <RequirePlayer><Blackjack /></RequirePlayer>,
       },
       {
