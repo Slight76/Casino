@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "server", "server", "{DDA3B93E-7BDE-4247-BA21-C625214BE4F6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Casino.Server", "server\Casino.Server\Casino.Server.csproj", "{DF302335-9F5A-4DC5-BD0A-733C732BBD97}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DF302335-9F5A-4DC5-BD0A-733C732BBD97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF302335-9F5A-4DC5-BD0A-733C732BBD97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF302335-9F5A-4DC5-BD0A-733C732BBD97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF302335-9F5A-4DC5-BD0A-733C732BBD97}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DF302335-9F5A-4DC5-BD0A-733C732BBD97} = {DDA3B93E-7BDE-4247-BA21-C625214BE4F6}
+	EndGlobalSection
+EndGlobal
