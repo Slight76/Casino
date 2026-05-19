@@ -142,6 +142,9 @@ public class BlackjackEngine
     {
         var seat = ValidatePlayerTurn(table, playerId);
         var hand = seat.CurrentHand;
+
+        if (hand.IsSplitAces && table.Rules.SplitAcesOneCardOnly)
+            throw new InvalidOperationException("Cannot hit split aces: one card only per hand.");
         var card = table.Shoe.Draw();
         hand.Add(card);
 
@@ -208,7 +211,7 @@ public class BlackjackEngine
     {
         var seat = ValidatePlayerTurn(table, playerId);
         if (!table.Rules.AllowSplit) throw new InvalidOperationException("Splitting not allowed.");
-        if (seat.Hands.Count != 1) throw new InvalidOperationException("Only one split allowed (v1).");
+        if (seat.Hands.Count > table.Rules.MaxSplits) throw new InvalidOperationException($"Only {table.Rules.MaxSplits} split(s) allowed.");
         var hand = seat.CurrentHand;
         if (!hand.CanSplit) throw new InvalidOperationException("Hand cannot be split.");
         if (seat.Chips < hand.Bet) throw new InvalidOperationException("Not enough chips to split.");
@@ -218,14 +221,22 @@ public class BlackjackEngine
         var c0 = hand.Cards[0];
         var c1 = hand.Cards[1];
         var bet = hand.Bet;
+        bool splitFromAces = c0.Rank == Rank.Ace;
 
-        var h0 = new Hand { Bet = bet };
+        var h0 = new Hand { Bet = bet, IsSplitHand = true, IsSplitAces = splitFromAces };
         h0.Add(c0);
         h0.Add(table.Shoe.Draw());
 
-        var h1 = new Hand { Bet = bet };
+        var h1 = new Hand { Bet = bet, IsSplitHand = true, IsSplitAces = splitFromAces };
         h1.Add(c1);
         h1.Add(table.Shoe.Draw());
+
+        // Split aces: each hand receives exactly one card and is immediately stood.
+        if (splitFromAces && table.Rules.SplitAcesOneCardOnly)
+        {
+            h0.IsStood = true;
+            h1.IsStood = true;
+        }
 
         seat.Hands = new List<Hand> { h0, h1 };
         seat.CurrentHandIndex = 0;
@@ -308,10 +319,20 @@ public class BlackjackEngine
                 }
                 else if (hand.IsBlackjack && !dealerBlackjack)
                 {
-                    hand.Result = HandResult.BlackjackWin;
-                    int payout = (int)(bet * table.Rules.BlackjackPayout);
-                    seat.Chips += bet + payout;
-                    hand.Winnings = payout;
+                    if (hand.IsSplitHand && table.Rules.SplitBlackjackPays1to1)
+                    {
+                        // Split-21 is not a natural blackjack — pays even money (1:1)
+                        hand.Result = HandResult.Win;
+                        seat.Chips += bet * 2;
+                        hand.Winnings = bet;
+                    }
+                    else
+                    {
+                        hand.Result = HandResult.BlackjackWin;
+                        int payout = (int)(bet * table.Rules.BlackjackPayout);
+                        seat.Chips += bet + payout;
+                        hand.Winnings = payout;
+                    }
                 }
                 else if (hand.IsBlackjack && dealerBlackjack)
                 {
