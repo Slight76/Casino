@@ -8,6 +8,8 @@ public class Hand
     public IReadOnlyList<Card> Cards => _cards;
 
     public bool IsStood { get; set; }
+    public bool IsSplitHand { get; set; }  // true when this hand was created by splitting
+    public bool IsSplitAces { get; set; }  // true when this hand was created by splitting aces
     public HandResult? Result { get; set; }
     public int Winnings { get; set; }
     public int Bet { get; set; }

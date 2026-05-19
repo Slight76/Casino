@@ -251,4 +251,121 @@ public class EngineTests
         Assert.Equal(HandResult.Push, p.Hands[0].Result);
         Assert.Equal(1000, p.Chips);
     }
+
+    [Fact]
+    public void SplitAces_OneCardOnly_HandsAutoStand_And_DealerTurnAdvances()
+    {
+        // Alice: Ace+Ace → split. Each hand gets exactly one drawn card then auto-stands.
+        // Deal: A1=Ace, DU=Ten, A2=Ace, DH=Seven, split-h0=King (Ace+King=21), split-h1=Three (Ace+Three=14)
+        // Dealer: Ten+Seven=17 (no further hit needed).
+        var engine = new BlackjackEngine();
+        var table = new BlackjackTable("t1", new BlackjackRules());
+        table.Shoe = new FakeShoe(
+            C(Rank.Ace),    // alice 1
+            C(Rank.Ten),    // dealer up
+            C(Rank.Ace),    // alice 2
+            C(Rank.Seven),  // dealer hole (Ten+Seven=17)
+            C(Rank.King),   // split h0: Ace+King = 21
+            C(Rank.Three)); // split h1: Ace+Three = 14
+        var a = new Seat { PlayerId = Guid.NewGuid(), PlayerName = "A", Chips = 1000 };
+        table.Seats.Add(a);
+
+        engine.PlaceBet(table, a.PlayerId, 100);
+        engine.StartRound(table);
+        engine.Split(table, a.PlayerId);
+
+        // Each hand: one original ace + one drawn card = 2 cards total
+        Assert.Equal(2, a.Hands.Count);
+        Assert.Equal(2, a.Hands[0].Cards.Count);
+        Assert.Equal(2, a.Hands[1].Cards.Count);
+        // Both auto-stood after the single drawn card
+        Assert.True(a.Hands[0].IsStood);
+        Assert.True(a.Hands[1].IsStood);
+        // Both marked as split-from-aces
+        Assert.True(a.Hands[0].IsSplitAces);
+        Assert.True(a.Hands[1].IsSplitAces);
+        // No player action required — already at dealer turn
+        Assert.Equal(GamePhase.DealerTurn, table.Phase);
+
+        engine.PlayDealer(table);
+        engine.Settle(table);
+
+        // h0: Ace+King=21 (split, IsSplitHand=true) → 1:1 win vs dealer 17
+        Assert.Equal(HandResult.Win, a.Hands[0].Result);
+        Assert.Equal(100, a.Hands[0].Winnings);
+        // h1: Ace+Three=14 < dealer 17 → lose
+        Assert.Equal(HandResult.Lose, a.Hands[1].Result);
+    }
+
+    [Fact]
+    public void SplitAces_Hit_Throws_WhenSplitAcesOneCardOnly()
+    {
+        // After splitting aces, hitting is forbidden. Verify the guard throws even if caller bypasses
+        // the normal turn-advance logic.
+        var engine = new BlackjackEngine();
+        var table = new BlackjackTable("t1", new BlackjackRules());
+        table.Shoe = new FakeShoe(
+            C(Rank.Ace), C(Rank.Ten), C(Rank.Ace), C(Rank.Seven),
+            C(Rank.King), C(Rank.Three), C(Rank.Five)); // extra card never consumed by normal play
+        var a = new Seat { PlayerId = Guid.NewGuid(), PlayerName = "A", Chips = 1000 };
+        table.Seats.Add(a);
+
+        engine.PlaceBet(table, a.PlayerId, 100);
+        engine.StartRound(table);
+        engine.Split(table, a.PlayerId);
+
+        // Force player-turn context for the split-ace hand (bypasses normal auto-advance)
+        table.Phase = GamePhase.PlayerTurn;
+        table.CurrentSeatIndex = 0;
+        a.CurrentHandIndex = 0;
+        a.Hands[0].IsStood = false; // un-stand to make ValidatePlayerTurn pass
+
+        Assert.Throws<InvalidOperationException>(() => engine.Hit(table, a.PlayerId));
+    }
+
+    [Fact]
+    public void SplitHand_21_Pays_1To1_Not_3To2()
+    {
+        // Alice splits King+Ten (both value 10). After split: h0=King+Ace=21 (IsSplitHand), h1=Ten+Six=16.
+        // h0 is done (IsBlackjack=true). Turn advances to h1 immediately.
+        // Alice stands h1 (16). Dealer 5+9=14, hits Three → 17.
+        // h0 should pay 1:1 (Win, not BlackjackWin). h1 loses (16 < 17).
+        var engine = new BlackjackEngine();
+        var table = new BlackjackTable("t1", new BlackjackRules());
+        table.Shoe = new FakeShoe(
+            C(Rank.King),  // alice 1
+            C(Rank.Five),  // dealer up
+            C(Rank.Ten),   // alice 2 (same value as King → CanSplit)
+            C(Rank.Nine),  // dealer hole (5+9=14)
+            C(Rank.Ace),   // split h0: King+Ace = 21
+            C(Rank.Six),   // split h1: Ten+Six = 16
+            C(Rank.Three)); // dealer hits: 14+3=17
+        var a = new Seat { PlayerId = Guid.NewGuid(), PlayerName = "A", Chips = 1000 };
+        table.Seats.Add(a);
+
+        engine.PlaceBet(table, a.PlayerId, 100);
+        engine.StartRound(table);
+
+        engine.Split(table, a.PlayerId);
+        // h0 (King+Ace=21) is done → turn advanced to h1
+        Assert.Equal(1, a.CurrentHandIndex);
+        Assert.True(a.Hands[0].IsSplitHand);
+
+        engine.Stand(table, a.PlayerId); // stand h1 (16)
+        Assert.Equal(GamePhase.DealerTurn, table.Phase);
+
+        engine.PlayDealer(table); // dealer 14 → hits to 17
+        engine.Settle(table);
+
+        // h0: split hand totalling 21 → pays 1:1 (Win, not BlackjackWin)
+        Assert.Equal(HandResult.Win, a.Hands[0].Result);
+        Assert.Equal(100, a.Hands[0].Winnings); // 1:1 not 150 (3:2)
+
+        // h1: 16 < dealer 17 → lose
+        Assert.Equal(HandResult.Lose, a.Hands[1].Result);
+
+        // Net: started 1000, bet 100 → 900, split extra 100 → 800
+        // h0 win 1:1: +200 → 1000; h1 loss: no chips change
+        Assert.Equal(1000, a.Chips);
+    }
 }
