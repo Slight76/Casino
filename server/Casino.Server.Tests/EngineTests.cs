@@ -111,6 +111,38 @@ public class EngineTests
     }
 
     [Fact]
+    public void Dealer_Natural_Blackjack_Beats_Split_21()
+    {
+        // Alice: Ten+Ten -> split. h0 draws Ace for split-21, h1 draws Two.
+        // Dealer: Ace+King natural blackjack.
+        var engine = new BlackjackEngine();
+        var table = new BlackjackTable("t1", new BlackjackRules());
+        table.Shoe = new FakeShoe(
+            C(Rank.Ten),   // alice 1
+            C(Rank.Ace),   // dealer up
+            C(Rank.Ten),   // alice 2
+            C(Rank.King),  // dealer hole -> natural blackjack
+            C(Rank.Ace),   // split h0: 21 (split hand, not natural)
+            C(Rank.Two));  // split h1: 12
+        var a = new Seat { PlayerId = Guid.NewGuid(), PlayerName = "A", Chips = 1000 };
+        table.Seats.Add(a);
+
+        engine.PlaceBet(table, a.PlayerId, 100);
+        engine.StartRound(table);
+        engine.Split(table, a.PlayerId);
+        engine.Stand(table, a.PlayerId); // stand h1
+
+        Assert.Equal(GamePhase.DealerTurn, table.Phase);
+        engine.PlayDealer(table);
+        engine.Settle(table);
+
+        Assert.Equal(HandResult.Lose, a.Hands[0].Result);
+        Assert.Equal(-100, a.Hands[0].Winnings);
+        Assert.Equal(HandResult.Lose, a.Hands[1].Result);
+        Assert.Equal(800, a.Chips);
+    }
+
+    [Fact]
     public void Double_Doubles_Bet_One_Card_Then_Stand()
     {
         var engine = new BlackjackEngine();
