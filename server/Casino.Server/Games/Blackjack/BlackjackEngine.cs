@@ -397,6 +397,8 @@ public class BlackjackEngine
 
     public void ResetForNextRound(BlackjackTable table)
     {
+        table.Shoe.ReshuffleIfNeededAtRoundBoundary();
+
         foreach (var seat in table.Seats)
         {
             seat.Hands = new List<Hand> { new Hand() };

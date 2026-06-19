@@ -16,16 +16,24 @@ public class ShoeTests
     }
 
     [Fact]
-    public void Reshuffles_At_75_Percent_Penetration()
+    public void Draw_Does_Not_Reshuffle_At_75_Percent_Penetration()
     {
         var shoe = new Shoe(1);
-        // Draw 76% of cards => 40 of 52
+        // Draw 40 of 52 cards; penetration reaches and crosses 75%, but draw source should not reset mid-round.
         for (int i = 0; i < 39; i++) shoe.Draw();
-        Assert.Equal(39, shoe.DrawCount);
-        // 40th draw crosses the 75% threshold (39/52 = 0.75), triggering reshuffle on next draw
-        // Drawing once more — penetration before draw is 0.75, so Draw() will reshuffle then return
         shoe.Draw();
-        Assert.Equal(1, shoe.DrawCount);
+        Assert.Equal(40, shoe.DrawCount);
+    }
+
+    [Fact]
+    public void Reshuffles_At_Round_Boundary_After_75_Percent_Penetration()
+    {
+        var shoe = new Shoe(1);
+        for (int i = 0; i < 40; i++) shoe.Draw();
+
+        shoe.ReshuffleIfNeededAtRoundBoundary();
+
+        Assert.Equal(0, shoe.DrawCount);
     }
 
     [Fact]
