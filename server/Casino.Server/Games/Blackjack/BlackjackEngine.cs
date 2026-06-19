@@ -336,9 +336,18 @@ public class BlackjackEngine
                 }
                 else if (hand.IsBlackjack && dealerBlackjack)
                 {
-                    hand.Result = HandResult.Push;
-                    seat.Chips += bet;
-                    hand.Winnings = 0;
+                    if (hand.IsSplitHand)
+                    {
+                        // Split 21 is not a natural blackjack; dealer natural blackjack wins.
+                        hand.Result = HandResult.Lose;
+                        hand.Winnings = -bet;
+                    }
+                    else
+                    {
+                        hand.Result = HandResult.Push;
+                        seat.Chips += bet;
+                        hand.Winnings = 0;
+                    }
                 }
                 else if (dealerBlackjack)
                 {
