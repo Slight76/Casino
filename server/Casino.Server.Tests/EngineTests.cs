@@ -28,6 +28,23 @@ public class EngineTests
     }
 
     [Fact]
+    public void ResetForNextRound_Reshuffles_Shoe_At_Round_Boundary()
+    {
+        var engine = new BlackjackEngine();
+        var table = new BlackjackTable("t1", new BlackjackRules(DeckCount: 1));
+
+        for (int i = 0; i < 40; i++) table.Shoe.Draw();
+        Assert.Equal(40, table.Shoe.DrawCount);
+
+        engine.Settle(table);
+        Assert.Equal(GamePhase.Settling, table.Phase);
+
+        engine.ResetForNextRound(table);
+        Assert.Equal(GamePhase.Betting, table.Phase);
+        Assert.Equal(0, table.Shoe.DrawCount);
+    }
+
+    [Fact]
     public void Full_Round_Two_Players_Stand_Dealer_Plays_Settle()
     {
         // Deal order: Alice1, Bob1, DealerUp, Alice2, Bob2, DealerHole, then dealer draws
