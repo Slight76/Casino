@@ -46,12 +46,13 @@ public class Shoe
 
     public int TotalCards => _cards.Count;
     public int DrawCount => _index;
+    public int RemainingCards => _cards.Count - _index;
     public double Penetration => (double)_index / _cards.Count;
     public bool ShouldReshuffleAtRoundBoundary => Penetration >= 0.75;
 
-    public void ReshuffleIfNeededAtRoundBoundary()
+    public void ReshuffleIfNeededAtRoundBoundary(int minimumRemainingCards = 0)
     {
-        if (ShouldReshuffleAtRoundBoundary)
+        if (ShouldReshuffleAtRoundBoundary || RemainingCards < minimumRemainingCards)
         {
             Build();
             Shuffle();
