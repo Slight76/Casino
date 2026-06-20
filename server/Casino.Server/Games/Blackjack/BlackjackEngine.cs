@@ -388,7 +388,8 @@ public class BlackjackEngine
 
     public void ResetForNextRound(BlackjackTable table)
     {
-        table.Shoe.ReshuffleIfNeededAtRoundBoundary();
+        int minimumCardsForOpeningDeal = (table.Seats.Count * 2) + 2;
+        table.Shoe.ReshuffleIfNeededAtRoundBoundary(minimumCardsForOpeningDeal);
 
         foreach (var seat in table.Seats)
         {

@@ -45,6 +45,27 @@ public class EngineTests
     }
 
     [Fact]
+    public void ResetForNextRound_Reshuffles_When_Next_Opening_Deal_Needs_More_Cards()
+    {
+        var engine = new BlackjackEngine();
+        var table = new BlackjackTable("t1", new BlackjackRules(DeckCount: 1));
+        for (int i = 0; i < 7; i++)
+        {
+            table.Seats.Add(new Seat { PlayerId = Guid.NewGuid(), PlayerName = $"P{i}", Chips = 1000 });
+        }
+
+        for (int i = 0; i < 38; i++) table.Shoe.Draw();
+        Assert.Equal(14, table.Shoe.RemainingCards);
+
+        engine.Settle(table);
+        engine.ResetForNextRound(table);
+
+        Assert.Equal(GamePhase.Betting, table.Phase);
+        Assert.Equal(0, table.Shoe.DrawCount);
+        Assert.Equal(52, table.Shoe.RemainingCards);
+    }
+
+    [Fact]
     public void Full_Round_Two_Players_Stand_Dealer_Plays_Settle()
     {
         // Deal order: Alice1, Bob1, DealerUp, Alice2, Bob2, DealerHole, then dealer draws
