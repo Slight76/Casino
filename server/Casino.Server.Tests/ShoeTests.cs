@@ -37,6 +37,19 @@ public class ShoeTests
     }
 
     [Fact]
+    public void Reshuffles_At_Round_Boundary_When_Remaining_Cards_Are_Below_Buffer()
+    {
+        var shoe = new Shoe(1);
+        for (int i = 0; i < 38; i++) shoe.Draw();
+        Assert.Equal(14, shoe.RemainingCards);
+
+        shoe.ReshuffleIfNeededAtRoundBoundary(minimumRemainingCards: 16);
+
+        Assert.Equal(0, shoe.DrawCount);
+        Assert.Equal(52, shoe.RemainingCards);
+    }
+
+    [Fact]
     public void Draw_Always_Returns_A_Card_Even_Beyond_Original_Size()
     {
         var shoe = new Shoe(1);
