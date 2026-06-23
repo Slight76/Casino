@@ -336,9 +336,18 @@ public class BlackjackEngine
                 }
                 else if (hand.IsBlackjack && dealerBlackjack)
                 {
-                    hand.Result = HandResult.Push;
-                    seat.Chips += bet;
-                    hand.Winnings = 0;
+                    if (hand.IsSplitHand)
+                    {
+                        // Split 21 is not a natural blackjack; dealer natural blackjack wins.
+                        hand.Result = HandResult.Lose;
+                        hand.Winnings = -bet;
+                    }
+                    else
+                    {
+                        hand.Result = HandResult.Push;
+                        seat.Chips += bet;
+                        hand.Winnings = 0;
+                    }
                 }
                 else if (dealerBlackjack)
                 {
@@ -388,6 +397,9 @@ public class BlackjackEngine
 
     public void ResetForNextRound(BlackjackTable table)
     {
+        int minimumCardsForOpeningDeal = (table.Seats.Count * 2) + 2;
+        table.Shoe.ReshuffleIfNeededAtRoundBoundary(minimumCardsForOpeningDeal);
+
         foreach (var seat in table.Seats)
         {
             seat.Hands = new List<Hand> { new Hand() };

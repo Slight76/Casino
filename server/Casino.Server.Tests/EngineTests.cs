@@ -28,6 +28,44 @@ public class EngineTests
     }
 
     [Fact]
+    public void ResetForNextRound_Reshuffles_Shoe_At_Round_Boundary()
+    {
+        var engine = new BlackjackEngine();
+        var table = new BlackjackTable("t1", new BlackjackRules(DeckCount: 1));
+
+        for (int i = 0; i < 40; i++) table.Shoe.Draw();
+        Assert.Equal(40, table.Shoe.DrawCount);
+
+        engine.Settle(table);
+        Assert.Equal(GamePhase.Settling, table.Phase);
+
+        engine.ResetForNextRound(table);
+        Assert.Equal(GamePhase.Betting, table.Phase);
+        Assert.Equal(0, table.Shoe.DrawCount);
+    }
+
+    [Fact]
+    public void ResetForNextRound_Reshuffles_When_Next_Opening_Deal_Needs_More_Cards()
+    {
+        var engine = new BlackjackEngine();
+        var table = new BlackjackTable("t1", new BlackjackRules(DeckCount: 1));
+        for (int i = 0; i < 7; i++)
+        {
+            table.Seats.Add(new Seat { PlayerId = Guid.NewGuid(), PlayerName = $"P{i}", Chips = 1000 });
+        }
+
+        for (int i = 0; i < 38; i++) table.Shoe.Draw();
+        Assert.Equal(14, table.Shoe.RemainingCards);
+
+        engine.Settle(table);
+        engine.ResetForNextRound(table);
+
+        Assert.Equal(GamePhase.Betting, table.Phase);
+        Assert.Equal(0, table.Shoe.DrawCount);
+        Assert.Equal(52, table.Shoe.RemainingCards);
+    }
+
+    [Fact]
     public void Full_Round_Two_Players_Stand_Dealer_Plays_Settle()
     {
         // Deal order: Alice1, Bob1, DealerUp, Alice2, Bob2, DealerHole, then dealer draws
@@ -108,6 +146,38 @@ public class EngineTests
         engine.Settle(table);
         Assert.Equal(HandResult.Push, a.Hands[0].Result);
         Assert.Equal(1000, a.Chips);
+    }
+
+    [Fact]
+    public void Dealer_Natural_Blackjack_Beats_Split_21()
+    {
+        // Alice: Ten+Ten -> split. h0 draws Ace for split-21, h1 draws Two.
+        // Dealer: Ace+King natural blackjack.
+        var engine = new BlackjackEngine();
+        var table = new BlackjackTable("t1", new BlackjackRules());
+        table.Shoe = new FakeShoe(
+            C(Rank.Ten),   // alice 1
+            C(Rank.Ace),   // dealer up
+            C(Rank.Ten),   // alice 2
+            C(Rank.King),  // dealer hole -> natural blackjack
+            C(Rank.Ace),   // split h0: 21 (split hand, not natural)
+            C(Rank.Two));  // split h1: 12
+        var a = new Seat { PlayerId = Guid.NewGuid(), PlayerName = "A", Chips = 1000 };
+        table.Seats.Add(a);
+
+        engine.PlaceBet(table, a.PlayerId, 100);
+        engine.StartRound(table);
+        engine.Split(table, a.PlayerId);
+        engine.Stand(table, a.PlayerId); // stand h1
+
+        Assert.Equal(GamePhase.DealerTurn, table.Phase);
+        engine.PlayDealer(table);
+        engine.Settle(table);
+
+        Assert.Equal(HandResult.Lose, a.Hands[0].Result);
+        Assert.Equal(-100, a.Hands[0].Winnings);
+        Assert.Equal(HandResult.Lose, a.Hands[1].Result);
+        Assert.Equal(800, a.Chips);
     }
 
     [Fact]
